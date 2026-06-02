@@ -1,7 +1,23 @@
-import { useMemo, useRef } from "react";
-import { AdditiveBlending, BackSide, Color, type ShaderMaterial } from "three";
+import { useEffect, useMemo, useRef } from "react";
+import { useTexture } from "@react-three/drei";
+import {
+  AdditiveBlending,
+  BackSide,
+  Color,
+  DoubleSide,
+  Mesh,
+  SRGBColorSpace,
+  Vector3,
+  type ShaderMaterial,
+  type Texture
+} from "three";
 import { useFrame } from "@react-three/fiber";
-import type { CelestialBodyConfig, SurfaceStyle } from "../types";
+import type {
+  CelestialBodyConfig,
+  SurfaceStyle,
+  SurfaceTextureSet
+} from "../types";
+import type { SurfaceQualitySelection } from "../lib/surfaceQuality";
 
 const styleIds: Record<SurfaceStyle, number> = {
   sun: 0,
@@ -187,6 +203,63 @@ const sunFragmentShader = `
   }
 `;
 
+const texturedSunFragmentShader = `
+  precision highp float;
+
+  uniform sampler2D uTexture;
+  uniform vec3 uBaseColor;
+  uniform vec3 uSecondaryColor;
+  uniform float uTime;
+
+  varying vec2 vUv;
+  varying vec3 vNormal;
+
+  float hash(vec3 p) {
+    p = fract(p * 0.3183099 + vec3(0.1, 0.2, 0.3));
+    p *= 17.0;
+    return fract(p.x * p.y * p.z * (p.x + p.y + p.z));
+  }
+
+  float noise(vec3 x) {
+    vec3 i = floor(x);
+    vec3 f = fract(x);
+    f = f * f * (3.0 - 2.0 * f);
+    return mix(
+      mix(mix(hash(i + vec3(0, 0, 0)), hash(i + vec3(1, 0, 0)), f.x),
+          mix(hash(i + vec3(0, 1, 0)), hash(i + vec3(1, 1, 0)), f.x), f.y),
+      mix(mix(hash(i + vec3(0, 0, 1)), hash(i + vec3(1, 0, 1)), f.x),
+          mix(hash(i + vec3(0, 1, 1)), hash(i + vec3(1, 1, 1)), f.x), f.y),
+      f.z
+    );
+  }
+
+  float fbm(vec3 p) {
+    float value = 0.0;
+    float amplitude = 0.5;
+    for (int i = 0; i < 6; i++) {
+      value += amplitude * noise(p);
+      p *= 2.0;
+      amplitude *= 0.5;
+    }
+    return value;
+  }
+
+  void main() {
+    vec3 normal = normalize(vNormal);
+    vec3 baseTexture = texture2D(uTexture, vUv).rgb;
+    float equatorFlow = uTime * (0.32 + 0.18 * (1.0 - abs(normal.y)));
+    float cells = fbm(normal * 8.0 + vec3(equatorFlow, -uTime * 0.12, 0.0));
+    float granules = fbm(normal * 38.0 + vec3(0.0, uTime * 0.28, equatorFlow));
+    float flare = smoothstep(0.74, 1.0, granules) * 0.5;
+    float sunspot = smoothstep(0.23, 0.08, cells) * smoothstep(0.2, 0.85, abs(normal.y));
+    vec3 procedural = mix(uBaseColor, uSecondaryColor, cells * 0.72 + granules * 0.28);
+    vec3 color = mix(baseTexture * 1.25, procedural, 0.42);
+    color = mix(color, vec3(0.28, 0.035, 0.0), sunspot * 0.55);
+    color += vec3(1.0, 0.36, 0.05) * flare;
+    gl_FragColor = vec4(color, 1.0);
+  }
+`;
+
 const coronaFragmentShader = `
   precision highp float;
 
@@ -200,6 +273,195 @@ const coronaFragmentShader = `
     gl_FragColor = vec4(uColor * pulse, rim * 0.34);
   }
 `;
+
+const nightLightsFragmentShader = `
+  precision highp float;
+
+  uniform sampler2D uTexture;
+  uniform vec3 uLightDirection;
+  uniform float uOpacity;
+
+  varying vec2 vUv;
+  varying vec3 vNormal;
+
+  void main() {
+    vec3 normal = normalize(vNormal);
+    float night = smoothstep(0.24, -0.12, dot(normal, normalize(uLightDirection)));
+    vec3 color = texture2D(uTexture, vUv).rgb;
+    float alpha = max(max(color.r, color.g), color.b) * night * uOpacity;
+    gl_FragColor = vec4(color * 1.7, alpha);
+  }
+`;
+
+const atmosphereFragmentShader = `
+  precision highp float;
+
+  uniform vec3 uColor;
+  uniform float uOpacity;
+  varying vec3 vNormal;
+
+  void main() {
+    float rim = pow(1.0 - abs(dot(normalize(vNormal), vec3(0.0, 0.0, 1.0))), 2.0);
+    float haze = smoothstep(0.04, 0.82, rim);
+    gl_FragColor = vec4(uColor * (0.62 + haze * 0.74), uOpacity * haze);
+  }
+`;
+
+function configureColorTexture(texture?: Texture) {
+  if (!texture) {
+    return;
+  }
+
+  texture.colorSpace = SRGBColorSpace;
+  texture.anisotropy = Math.max(texture.anisotropy, 8);
+}
+
+function configureDataTexture(texture?: Texture) {
+  if (!texture) {
+    return;
+  }
+
+  texture.anisotropy = Math.max(texture.anisotropy, 8);
+}
+
+export function RealisticBodyMaterial({
+  body,
+  textureSet,
+  qualitySelection,
+  visualRadius
+}: {
+  body: CelestialBodyConfig;
+  textureSet?: SurfaceTextureSet;
+  qualitySelection?: SurfaceQualitySelection;
+  visualRadius: number;
+}) {
+  if (!textureSet || !qualitySelection) {
+    return <ProceduralBodyMaterial body={body} />;
+  }
+
+  if (body.kind === "star") {
+    return (
+      <TexturedSunMaterial
+        body={body}
+        variant={qualitySelection.variant}
+      />
+    );
+  }
+
+  return (
+    <TexturedSurfaceMaterial
+      body={body}
+      textureSet={textureSet}
+      qualitySelection={qualitySelection}
+      visualRadius={visualRadius}
+    />
+  );
+}
+
+function TexturedSurfaceMaterial({
+  body,
+  textureSet,
+  qualitySelection,
+  visualRadius
+}: {
+  body: CelestialBodyConfig;
+  textureSet: SurfaceTextureSet;
+  qualitySelection: SurfaceQualitySelection;
+  visualRadius: number;
+}) {
+  const texturePaths = useMemo(() => {
+    const variant = qualitySelection.variant;
+    const paths: Record<string, string> = {
+      map: variant.albedo
+    };
+
+    if (variant.normal) {
+      paths.normalMap = variant.normal;
+    }
+    if (variant.roughness) {
+      paths.roughnessMap = variant.roughness;
+    }
+    if (variant.displacement) {
+      paths.displacementMap = variant.displacement;
+    }
+
+    return paths;
+  }, [qualitySelection.variant]);
+
+  const textures = useTexture(texturePaths) as Record<string, Texture>;
+  const displacementScale = qualitySelection.displacementEnabled
+    ? visualRadius * (textureSet.heightScale ?? 0.04)
+    : 0;
+
+  useEffect(() => {
+    configureColorTexture(textures.map);
+    configureDataTexture(textures.normalMap);
+    configureDataTexture(textures.roughnessMap);
+    configureDataTexture(textures.displacementMap);
+  }, [textures]);
+
+  const usesMeasuredRelief = Boolean(textures.displacementMap && textureSet.hasMeasuredHeight);
+  const bumpScale = usesMeasuredRelief && !qualitySelection.displacementEnabled
+    ? visualRadius * 0.018
+    : 0;
+
+  return (
+    <meshStandardMaterial
+      map={textures.map}
+      normalMap={textures.normalMap}
+      roughnessMap={textures.roughnessMap}
+      displacementMap={
+        qualitySelection.displacementEnabled ? textures.displacementMap : undefined
+      }
+      displacementScale={displacementScale}
+      bumpMap={!qualitySelection.displacementEnabled ? textures.displacementMap : undefined}
+      bumpScale={bumpScale}
+      color="#ffffff"
+      roughness={body.surface.style === "earth" ? 0.58 : 0.84}
+      metalness={0}
+    />
+  );
+}
+
+function TexturedSunMaterial({
+  body,
+  variant
+}: {
+  body: CelestialBodyConfig;
+  variant: SurfaceQualitySelection["variant"];
+}) {
+  const materialRef = useRef<ShaderMaterial>(null);
+  const texture = useTexture(variant.albedo) as Texture;
+  const uniforms = useMemo(
+    () => ({
+      uTexture: { value: texture },
+      uBaseColor: { value: new Color(body.surface.baseColor) },
+      uSecondaryColor: { value: new Color(body.surface.secondaryColor) },
+      uTime: { value: 0 }
+    }),
+    [body, texture]
+  );
+
+  useEffect(() => {
+    configureColorTexture(texture);
+  }, [texture]);
+
+  useFrame(({ clock }) => {
+    if (materialRef.current) {
+      materialRef.current.uniforms.uTime.value = clock.elapsedTime;
+    }
+  });
+
+  return (
+    <shaderMaterial
+      ref={materialRef}
+      uniforms={uniforms}
+      vertexShader={vertexShader}
+      fragmentShader={texturedSunFragmentShader}
+      toneMapped={false}
+    />
+  );
+}
 
 export function ProceduralBodyMaterial({
   body
@@ -237,6 +499,113 @@ export function ProceduralBodyMaterial({
   );
 }
 
+export function SurfaceOverlayLayers({
+  body,
+  textureSet,
+  qualitySelection,
+  radius
+}: {
+  body: CelestialBodyConfig;
+  textureSet?: SurfaceTextureSet;
+  qualitySelection?: SurfaceQualitySelection;
+  radius: number;
+}) {
+  const variant = qualitySelection?.variant;
+
+  if (!textureSet || !variant) {
+    return null;
+  }
+
+  return (
+    <>
+      {body.id === "earth" && variant.night ? (
+        <NightLightsShell texturePath={variant.night} radius={radius} />
+      ) : null}
+      {body.id === "earth" && variant.clouds ? (
+        <CloudShell texturePath={variant.clouds} radius={radius} />
+      ) : null}
+    </>
+  );
+}
+
+function CloudShell({
+  texturePath,
+  radius
+}: {
+  texturePath: string;
+  radius: number;
+}) {
+  const meshRef = useRef<Mesh>(null);
+  const texture = useTexture(texturePath) as Texture;
+
+  useEffect(() => {
+    configureColorTexture(texture);
+  }, [texture]);
+
+  useFrame(({ clock }) => {
+    if (meshRef.current) {
+      meshRef.current.rotation.y = clock.elapsedTime * 0.025;
+    }
+  });
+
+  return (
+    <mesh ref={meshRef} scale={1.018}>
+      <sphereGeometry args={[radius, 128, 64]} />
+      <meshStandardMaterial
+        color="#ffffff"
+        map={texture}
+        alphaMap={texture}
+        transparent
+        opacity={0.46}
+        roughness={1}
+        metalness={0}
+        depthWrite={false}
+        side={DoubleSide}
+      />
+    </mesh>
+  );
+}
+
+function NightLightsShell({
+  texturePath,
+  radius
+}: {
+  texturePath: string;
+  radius: number;
+}) {
+  const materialRef = useRef<ShaderMaterial>(null);
+  const texture = useTexture(texturePath) as Texture;
+  const uniforms = useMemo(
+    () => ({
+      uTexture: { value: texture },
+      uLightDirection: { value: new Vector3(0.35, 0.42, 0.82) },
+      uOpacity: { value: 0.92 }
+    }),
+    [texture]
+  );
+
+  useEffect(() => {
+    configureColorTexture(texture);
+  }, [texture]);
+
+  return (
+    <mesh scale={1.006}>
+      <sphereGeometry args={[radius, 96, 48]} />
+      <shaderMaterial
+        ref={materialRef}
+        uniforms={uniforms}
+        vertexShader={vertexShader}
+        fragmentShader={nightLightsFragmentShader}
+        transparent
+        blending={AdditiveBlending}
+        depthWrite={false}
+        side={DoubleSide}
+        toneMapped={false}
+      />
+    </mesh>
+  );
+}
+
 export function AtmosphereShell({
   color,
   radius,
@@ -246,13 +615,22 @@ export function AtmosphereShell({
   radius: number;
   opacity?: number;
 }) {
+  const uniforms = useMemo(
+    () => ({
+      uColor: { value: new Color(color) },
+      uOpacity: { value: opacity }
+    }),
+    [color, opacity]
+  );
+
   return (
     <mesh scale={1.08}>
       <sphereGeometry args={[radius, 48, 24]} />
-      <meshBasicMaterial
-        color={color}
+      <shaderMaterial
+        uniforms={uniforms}
+        vertexShader={vertexShader}
+        fragmentShader={atmosphereFragmentShader}
         transparent
-        opacity={opacity}
         blending={AdditiveBlending}
         side={BackSide}
         depthWrite={false}

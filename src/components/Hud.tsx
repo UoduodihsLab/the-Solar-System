@@ -17,6 +17,7 @@ import {
   selectionTargets,
   smallBodyPopulations
 } from "../data/solarSystem";
+import { getSurfaceTextureSet } from "../data/surfaceAssets";
 import { formatDistanceAU, radiusKmToSceneUnits } from "../lib/scale";
 import { formatSimulationDate, formatSpeed } from "../lib/time";
 
@@ -208,6 +209,7 @@ function SelectionPanel({
 
   const satelliteCount = knownPlanetarySatelliteCounts[body.id];
   const visualRadius = radiusKmToSceneUnits(body.radiusKm, body.kind);
+  const textureSet = getSurfaceTextureSet(body.surface.textureSet);
   const rotation = body.rotation
     ? `${Math.abs(body.rotation.periodHours).toLocaleString("zh-CN", {
         maximumFractionDigits: 1
@@ -264,6 +266,38 @@ function SelectionPanel({
             </dd>
           </div>
         ) : null}
+        {textureSet ? (
+          <>
+            <div>
+              <dt>表面数据</dt>
+              <dd>{textureSet.sourceMetadata.dataTypeZh}</dd>
+            </div>
+            <div>
+              <dt>真实性</dt>
+              <dd>
+                {accuracyLabel(textureSet.accuracyKind)}
+                {textureSet.hasMeasuredHeight ? " / DEM 位移可用" : " / 无位移"}
+              </dd>
+            </div>
+            <div>
+              <dt>来源</dt>
+              <dd>
+                <a
+                  className="source-link"
+                  href={textureSet.sourceMetadata.url}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  {textureSet.sourceMetadata.title}
+                </a>
+              </dd>
+            </div>
+            <div>
+              <dt>说明</dt>
+              <dd>{textureSet.sourceMetadata.noteZh}</dd>
+            </div>
+          </>
+        ) : null}
       </dl>
       <button className="panel-action" onClick={onFocus}>
         <Focus size={16} />
@@ -271,6 +305,21 @@ function SelectionPanel({
       </button>
     </aside>
   );
+}
+
+function accuracyLabel(kind: NonNullable<ReturnType<typeof getSurfaceTextureSet>>["accuracyKind"]) {
+  switch (kind) {
+    case "measured":
+      return "真实测量/拼图";
+    case "representative":
+      return "代表性外观";
+    case "artistic":
+      return "艺术化资产";
+    case "procedural":
+      return "程序化材质";
+    default:
+      return kind;
+  }
 }
 
 function kindLabel(kind: CelestialBodyConfig["kind"]) {

@@ -17,6 +17,42 @@ export type SurfaceStyle =
   | "rock"
   | "dwarf";
 
+export type SurfaceTextureQuality = "low" | "medium" | "high";
+
+export type SurfaceAccuracyKind =
+  | "measured"
+  | "representative"
+  | "artistic"
+  | "procedural";
+
+export interface SurfaceTextureVariant {
+  albedo: string;
+  normal?: string;
+  roughness?: string;
+  displacement?: string;
+  clouds?: string;
+  night?: string;
+  resolution: [number, number];
+}
+
+export interface SurfaceSourceMetadata {
+  title: string;
+  url: string;
+  credit: string;
+  dataTypeZh: string;
+  noteZh: string;
+  nativeResolution?: [number, number];
+}
+
+export interface SurfaceTextureSet {
+  id: string;
+  accuracyKind: SurfaceAccuracyKind;
+  hasMeasuredHeight: boolean;
+  heightScale?: number;
+  sourceMetadata: SurfaceSourceMetadata;
+  qualityVariants: Record<SurfaceTextureQuality, SurfaceTextureVariant>;
+}
+
 export interface OrbitConfig {
   semiMajorAxisAU?: number;
   semiMajorAxisKm?: number;
@@ -71,6 +107,7 @@ export interface CelestialBodyConfig {
     secondaryColor: string;
     atmosphereColor?: string;
     emissiveColor?: string;
+    textureSet?: string;
   };
   rings?: RingConfig;
   irregularSatellites?: IrregularSatellitePopulationConfig;

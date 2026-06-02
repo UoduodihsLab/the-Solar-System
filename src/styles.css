@@ -253,6 +253,16 @@ h1 {
   overflow-wrap: anywhere;
 }
 
+.source-link {
+  color: #a9e6ff;
+  text-decoration: none;
+}
+
+.source-link:hover {
+  color: #ffffff;
+  text-decoration: underline;
+}
+
 .panel-action {
   width: 100%;
   margin-top: 13px;

@@ -1,9 +1,10 @@
 import { Html } from "@react-three/drei";
-import { useFrame } from "@react-three/fiber";
+import { useFrame, useThree } from "@react-three/fiber";
 import { memo, useEffect, useMemo, useRef } from "react";
 import { Group, Mesh, Vector3 } from "three";
 import type { CelestialBodyConfig, TargetRegistration } from "../types";
 import { bodiesById, childrenByParent } from "../data/solarSystem";
+import { getSurfaceTextureSet } from "../data/surfaceAssets";
 import { TAU, DEG_TO_RAD } from "../lib/math";
 import {
   moonOrbitKmToSceneUnits,
@@ -14,9 +15,14 @@ import {
   orbitalPositionScene
 } from "../lib/orbits";
 import {
+  selectSurfaceQuality,
+  surfaceGeometrySegments
+} from "../lib/surfaceQuality";
+import {
   AtmosphereShell,
   CoronaShell,
-  ProceduralBodyMaterial
+  RealisticBodyMaterial,
+  SurfaceOverlayLayers
 } from "./ProceduralMaterials";
 import { OrbitLine } from "./OrbitLine";
 import { RingSystem } from "./RingSystem";
@@ -57,6 +63,22 @@ function bodyOrbitRadius(body: CelestialBodyConfig) {
   );
 }
 
+function atmosphereOpacity(body: CelestialBodyConfig) {
+  if (body.id === "venus" || body.id === "titan") {
+    return 0.32;
+  }
+
+  if (body.id === "earth") {
+    return 0.2;
+  }
+
+  if (body.id === "uranus" || body.id === "neptune") {
+    return 0.18;
+  }
+
+  return 0.14;
+}
+
 export const CelestialBodyNode = memo(function CelestialBodyNode({
   body,
   elapsedDays,
@@ -77,10 +99,32 @@ export const CelestialBodyNode = memo(function CelestialBodyNode({
   const groupRef = useRef<Group>(null);
   const spinRef = useRef<Group>(null);
   const meshRef = useRef<Mesh>(null);
+  const { gl, size } = useThree();
   const visualRadius = radiusKmToSceneUnits(body.radiusKm, body.kind);
   const moonOrbitRadius = bodyOrbitRadius(body);
   const children = childrenByParent[body.id] ?? [];
   const isSelected = selectedId === body.id;
+  const textureSet = getSurfaceTextureSet(body.surface.textureSet);
+  const maxTextureSize = gl.capabilities.maxTextureSize;
+  const qualitySelection = useMemo(
+    () =>
+      textureSet
+        ? selectSurfaceQuality(textureSet, {
+            focused: isSelected,
+            viewportWidth: size.width,
+            maxTextureSize
+          })
+        : undefined,
+    [isSelected, maxTextureSize, size.width, textureSet]
+  );
+  const defaultSegments = {
+    width: body.kind === "star" || body.kind === "planet" ? 96 : 48,
+    height: body.kind === "star" || body.kind === "planet" ? 48 : 24
+  };
+  const segments = useMemo(
+    () => surfaceGeometrySegments(textureSet, qualitySelection, defaultSegments),
+    [defaultSegments, qualitySelection, textureSet]
+  );
   const showLabel =
     labelsVisible &&
     (body.kind === "star" || body.kind === "planet" || body.kind === "dwarf" || isSelected);
@@ -145,17 +189,32 @@ export const CelestialBodyNode = memo(function CelestialBodyNode({
               <sphereGeometry
                 args={[
                   visualRadius,
-                  body.kind === "star" || body.kind === "planet" ? 96 : 48,
-                  body.kind === "star" || body.kind === "planet" ? 48 : 24
+                  segments.width,
+                  segments.height
                 ]}
               />
-              <ProceduralBodyMaterial body={body} />
+              <RealisticBodyMaterial
+                body={body}
+                textureSet={textureSet}
+                qualitySelection={qualitySelection}
+                visualRadius={visualRadius}
+              />
             </mesh>
+            <SurfaceOverlayLayers
+              body={body}
+              textureSet={textureSet}
+              qualitySelection={qualitySelection}
+              radius={visualRadius}
+            />
           </group>
         </group>
 
         {body.surface.atmosphereColor && body.kind !== "star" ? (
-          <AtmosphereShell color={body.surface.atmosphereColor} radius={visualRadius} />
+          <AtmosphereShell
+            color={body.surface.atmosphereColor}
+            radius={visualRadius}
+            opacity={atmosphereOpacity(body)}
+          />
         ) : null}
         {body.kind === "star" ? (
           <>

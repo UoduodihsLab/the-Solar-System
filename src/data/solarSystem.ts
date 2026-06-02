@@ -25,7 +25,8 @@ export const bodies: CelestialBodyConfig[] = [
       style: "sun",
       baseColor: "#ffb347",
       secondaryColor: "#fff3a3",
-      emissiveColor: "#ff6a00"
+      emissiveColor: "#ff6a00",
+      textureSet: "sun"
     },
     descriptionZh:
       "太阳会自转，并且存在差速自转；这里用旋转噪声、日冕、耀斑和粒子表现聚变活动。"
@@ -51,7 +52,8 @@ export const bodies: CelestialBodyConfig[] = [
     surface: {
       style: "mercury",
       baseColor: "#8f8a80",
-      secondaryColor: "#c0b8a8"
+      secondaryColor: "#c0b8a8",
+      textureSet: "mercury"
     },
     descriptionZh: "布满撞击坑的岩质行星，轨道偏心率明显。"
   },
@@ -77,7 +79,8 @@ export const bodies: CelestialBodyConfig[] = [
       style: "venus",
       baseColor: "#d8b46a",
       secondaryColor: "#fff0b1",
-      atmosphereColor: "#ffdf8a"
+      atmosphereColor: "#ffdf8a",
+      textureSet: "venus"
     },
     descriptionZh: "厚重云层覆盖的高温行星，自转方向与大多数行星相反。"
   },
@@ -103,7 +106,8 @@ export const bodies: CelestialBodyConfig[] = [
       style: "earth",
       baseColor: "#2362a3",
       secondaryColor: "#52ad76",
-      atmosphereColor: "#8fd5ff"
+      atmosphereColor: "#8fd5ff",
+      textureSet: "earth"
     },
     descriptionZh: "拥有海洋、陆地、云层和月球的岩质行星。"
   },
@@ -125,7 +129,8 @@ export const bodies: CelestialBodyConfig[] = [
     surface: {
       style: "moon",
       baseColor: "#8b8980",
-      secondaryColor: "#d1cec2"
+      secondaryColor: "#d1cec2",
+      textureSet: "moon"
     },
     descriptionZh: "地球唯一的天然卫星，这里保留同步自转的慢速视觉效果。"
   },
@@ -151,7 +156,8 @@ export const bodies: CelestialBodyConfig[] = [
       style: "mars",
       baseColor: "#b35132",
       secondaryColor: "#f0b07a",
-      atmosphereColor: "#d98a5f"
+      atmosphereColor: "#d98a5f",
+      textureSet: "mars"
     },
     descriptionZh: "红色沙尘与极冠明显，拥有火卫一和火卫二。"
   },
@@ -173,7 +179,8 @@ export const bodies: CelestialBodyConfig[] = [
     surface: {
       style: "rock",
       baseColor: "#6d6258",
-      secondaryColor: "#a39686"
+      secondaryColor: "#a39686",
+      textureSet: "phobos"
     },
     descriptionZh: "火星内侧小卫星，形状在视觉上以粗糙小天体表现。"
   },
@@ -195,7 +202,8 @@ export const bodies: CelestialBodyConfig[] = [
     surface: {
       style: "rock",
       baseColor: "#7d7468",
-      secondaryColor: "#aaa091"
+      secondaryColor: "#aaa091",
+      textureSet: "deimos"
     },
     descriptionZh: "火星外侧小卫星。"
   },
@@ -220,7 +228,8 @@ export const bodies: CelestialBodyConfig[] = [
     surface: {
       style: "jupiter",
       baseColor: "#d7a86e",
-      secondaryColor: "#f2e0c2"
+      secondaryColor: "#f2e0c2",
+      textureSet: "jupiter"
     },
     rings: {
       innerRadiusKm: 92_000,
@@ -253,7 +262,8 @@ export const bodies: CelestialBodyConfig[] = [
     surface: {
       style: "rock",
       baseColor: "#e0b44f",
-      secondaryColor: "#fff0a5"
+      secondaryColor: "#fff0a5",
+      textureSet: "io"
     },
     descriptionZh: "火山活动强烈的木星卫星。"
   },
@@ -274,7 +284,8 @@ export const bodies: CelestialBodyConfig[] = [
     surface: {
       style: "ice",
       baseColor: "#cfd8d9",
-      secondaryColor: "#9c785f"
+      secondaryColor: "#9c785f",
+      textureSet: "europa"
     },
     descriptionZh: "冰壳下可能存在海洋的伽利略卫星。"
   },
@@ -295,7 +306,8 @@ export const bodies: CelestialBodyConfig[] = [
     surface: {
       style: "ice",
       baseColor: "#8f8b83",
-      secondaryColor: "#d7d3c8"
+      secondaryColor: "#d7d3c8",
+      textureSet: "ganymede"
     },
     descriptionZh: "太阳系最大的卫星。"
   },
@@ -316,7 +328,8 @@ export const bodies: CelestialBodyConfig[] = [
     surface: {
       style: "ice",
       baseColor: "#5b5851",
-      secondaryColor: "#b6b1a4"
+      secondaryColor: "#b6b1a4",
+      textureSet: "callisto"
     },
     descriptionZh: "布满古老撞击坑的伽利略卫星。"
   },
@@ -425,7 +438,8 @@ export const bodies: CelestialBodyConfig[] = [
     surface: {
       style: "saturn",
       baseColor: "#d8c18f",
-      secondaryColor: "#f5e8c4"
+      secondaryColor: "#f5e8c4",
+      textureSet: "saturn"
     },
     rings: {
       innerRadiusKm: 74_500,
@@ -456,7 +470,12 @@ export const bodies: CelestialBodyConfig[] = [
     radiusKm: 198.2,
     orbit: { semiMajorAxisKm: 185_540, periodDays: 0.942, phaseDeg: 20 },
     rotation: { periodHours: 22.6, axialTiltDeg: 0 },
-    surface: { style: "ice", baseColor: "#a9a9a1", secondaryColor: "#dfded4" },
+    surface: {
+      style: "ice",
+      baseColor: "#a9a9a1",
+      secondaryColor: "#dfded4",
+      textureSet: "mimas"
+    },
     descriptionZh: "有巨大撞击坑的小型冰卫星。"
   },
   {
@@ -472,7 +491,12 @@ export const bodies: CelestialBodyConfig[] = [
       phaseDeg: 60
     },
     rotation: { periodHours: 32.9, axialTiltDeg: 0 },
-    surface: { style: "ice", baseColor: "#d6e2e5", secondaryColor: "#ffffff" },
+    surface: {
+      style: "ice",
+      baseColor: "#d6e2e5",
+      secondaryColor: "#ffffff",
+      textureSet: "enceladus"
+    },
     descriptionZh: "明亮冰壳和喷流让它在土星系统中非常醒目。"
   },
   {
@@ -488,7 +512,12 @@ export const bodies: CelestialBodyConfig[] = [
       phaseDeg: 105
     },
     rotation: { periodHours: 45.3, axialTiltDeg: 0 },
-    surface: { style: "ice", baseColor: "#bfc3bd", secondaryColor: "#ecebe1" },
+    surface: {
+      style: "ice",
+      baseColor: "#bfc3bd",
+      secondaryColor: "#ecebe1",
+      textureSet: "tethys"
+    },
     descriptionZh: "土星主要冰卫星之一。"
   },
   {
@@ -504,7 +533,12 @@ export const bodies: CelestialBodyConfig[] = [
       phaseDeg: 150
     },
     rotation: { periodHours: 65.7, axialTiltDeg: 0 },
-    surface: { style: "ice", baseColor: "#a8aba4", secondaryColor: "#e4e2d8" },
+    surface: {
+      style: "ice",
+      baseColor: "#a8aba4",
+      secondaryColor: "#e4e2d8",
+      textureSet: "dione"
+    },
     descriptionZh: "土星主要冰卫星之一。"
   },
   {
@@ -520,7 +554,12 @@ export const bodies: CelestialBodyConfig[] = [
       phaseDeg: 205
     },
     rotation: { periodHours: 108.4, axialTiltDeg: 0 },
-    surface: { style: "ice", baseColor: "#969890", secondaryColor: "#d7d7ce" },
+    surface: {
+      style: "ice",
+      baseColor: "#969890",
+      secondaryColor: "#d7d7ce",
+      textureSet: "rhea"
+    },
     descriptionZh: "土星第二大卫星。"
   },
   {
@@ -540,7 +579,8 @@ export const bodies: CelestialBodyConfig[] = [
       style: "venus",
       baseColor: "#b98742",
       secondaryColor: "#f0c16f",
-      atmosphereColor: "#ffbd68"
+      atmosphereColor: "#ffbd68",
+      textureSet: "titan"
     },
     descriptionZh: "拥有浓厚大气和甲烷湖海的巨型卫星。"
   },
@@ -574,7 +614,12 @@ export const bodies: CelestialBodyConfig[] = [
       phaseDeg: 5
     },
     rotation: { periodHours: 1903.7, axialTiltDeg: 0 },
-    surface: { style: "ice", baseColor: "#5b5249", secondaryColor: "#e5e2d8" },
+    surface: {
+      style: "ice",
+      baseColor: "#5b5249",
+      secondaryColor: "#e5e2d8",
+      textureSet: "iapetus"
+    },
     descriptionZh: "明暗两半球差异明显。"
   },
   {
@@ -665,7 +710,8 @@ export const bodies: CelestialBodyConfig[] = [
       style: "uranus",
       baseColor: "#80d8d8",
       secondaryColor: "#c8ffff",
-      atmosphereColor: "#a7fff4"
+      atmosphereColor: "#a7fff4",
+      textureSet: "uranus"
     },
     rings: {
       innerRadiusKm: 38_000,
@@ -695,7 +741,12 @@ export const bodies: CelestialBodyConfig[] = [
     radiusKm: 235.8,
     orbit: { semiMajorAxisKm: 129_900, periodDays: 1.413, phaseDeg: 30 },
     rotation: { periodHours: 33.9, axialTiltDeg: 0 },
-    surface: { style: "ice", baseColor: "#8b8c85", secondaryColor: "#d1d0c5" },
+    surface: {
+      style: "ice",
+      baseColor: "#8b8c85",
+      secondaryColor: "#d1d0c5",
+      textureSet: "miranda"
+    },
     descriptionZh: "地形破碎感强烈的天王星卫星。"
   },
   {
@@ -707,7 +758,12 @@ export const bodies: CelestialBodyConfig[] = [
     radiusKm: 578.9,
     orbit: { semiMajorAxisKm: 190_900, periodDays: 2.52, phaseDeg: 80 },
     rotation: { periodHours: 60.5, axialTiltDeg: 0 },
-    surface: { style: "ice", baseColor: "#a3a79f", secondaryColor: "#dfded4" },
+    surface: {
+      style: "ice",
+      baseColor: "#a3a79f",
+      secondaryColor: "#dfded4",
+      textureSet: "ariel"
+    },
     descriptionZh: "天王星主要卫星之一。"
   },
   {
@@ -719,7 +775,12 @@ export const bodies: CelestialBodyConfig[] = [
     radiusKm: 584.7,
     orbit: { semiMajorAxisKm: 266_000, periodDays: 4.144, phaseDeg: 130 },
     rotation: { periodHours: 99.5, axialTiltDeg: 0 },
-    surface: { style: "ice", baseColor: "#555a57", secondaryColor: "#979d96" },
+    surface: {
+      style: "ice",
+      baseColor: "#555a57",
+      secondaryColor: "#979d96",
+      textureSet: "umbriel"
+    },
     descriptionZh: "较暗的天王星主要卫星。"
   },
   {
@@ -731,7 +792,12 @@ export const bodies: CelestialBodyConfig[] = [
     radiusKm: 788.9,
     orbit: { semiMajorAxisKm: 436_300, periodDays: 8.706, phaseDeg: 190 },
     rotation: { periodHours: 208.9, axialTiltDeg: 0 },
-    surface: { style: "ice", baseColor: "#8e9088", secondaryColor: "#cfcec4" },
+    surface: {
+      style: "ice",
+      baseColor: "#8e9088",
+      secondaryColor: "#cfcec4",
+      textureSet: "titania"
+    },
     descriptionZh: "天王星最大的卫星。"
   },
   {
@@ -743,7 +809,12 @@ export const bodies: CelestialBodyConfig[] = [
     radiusKm: 761.4,
     orbit: { semiMajorAxisKm: 583_500, periodDays: 13.463, phaseDeg: 245 },
     rotation: { periodHours: 323.1, axialTiltDeg: 0 },
-    surface: { style: "ice", baseColor: "#6b6d66", secondaryColor: "#b8b7ad" },
+    surface: {
+      style: "ice",
+      baseColor: "#6b6d66",
+      secondaryColor: "#b8b7ad",
+      textureSet: "oberon"
+    },
     descriptionZh: "天王星外侧主要卫星。"
   },
   {
@@ -804,7 +875,8 @@ export const bodies: CelestialBodyConfig[] = [
       style: "neptune",
       baseColor: "#3359c7",
       secondaryColor: "#7aa8ff",
-      atmosphereColor: "#77a9ff"
+      atmosphereColor: "#77a9ff",
+      textureSet: "neptune"
     },
     rings: {
       innerRadiusKm: 41_900,
@@ -840,7 +912,12 @@ export const bodies: CelestialBodyConfig[] = [
       phaseDeg: 45
     },
     rotation: { periodHours: 141, axialTiltDeg: 0 },
-    surface: { style: "ice", baseColor: "#b7c7c6", secondaryColor: "#f0ded0" },
+    surface: {
+      style: "ice",
+      baseColor: "#b7c7c6",
+      secondaryColor: "#f0ded0",
+      textureSet: "triton"
+    },
     descriptionZh: "逆行的大型海王星卫星。"
   },
   {
