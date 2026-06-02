@@ -1,5 +1,7 @@
 # The Solar System
 
+[Chinese version](README_zh.md)
+
 A high-performance 3D solar system simulation built for the web with Vite, React, TypeScript, and Three.js.
 
 The project presents the solar system as an explorable spatial model instead of a flat educational diagram. Planets and moons rotate and orbit, distant small-body structures remain navigable through visual scale compression, and the whole scene can be explored from a wide god's-eye perspective.

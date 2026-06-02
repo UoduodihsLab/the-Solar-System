@@ -1,59 +1,59 @@
-# 项目说明
+# Project Overview
 
-这个项目名为 The Solar System，使用 Vite + React + TypeScript 构建一个网页端可游览的太阳系 3D 模型。当前代码实现的是第一阶段：自然太阳系的高性能 3D 场景。
+This project is named The Solar System. It uses Vite, React, and TypeScript to build an explorable web-based 3D model of the solar system. The current code implements phase one: a high-performance 3D scene for the natural solar system.
 
-目标不是普通科普图式的太阳系，而是一个可缩放、可聚焦、可在网页端以上帝视角游览的空间模型。行星与卫星具有自转和公转；太阳系整体也以视觉化方式表现围绕银河中心方向的运动。
+The goal is not a conventional educational solar system diagram. It is a scalable, focusable spatial model that can be explored from a god's-eye view in the browser. Planets and moons rotate and orbit, and the solar system as a whole visually expresses motion relative to the galactic center direction.
 
-## 当前代码事实
+## Current Code Facts
 
-- 技术栈：Vite、React 19、TypeScript、Three.js、@react-three/fiber、@react-three/drei、@react-three/postprocessing、lucide-react、Vitest。
-- 入口：`src/main.tsx` 挂载 React 应用，`src/App.tsx` 组合 3D 场景与 HUD。
-- 主场景：`src/components/SolarSystemScene.tsx` 创建 R3F `Canvas`、灯光、后期 Bloom/Vignette、相机控制、星空环境、小天体点云和太阳系根节点。
-- 太阳系根节点：`SolarSystemRoot` 会随模拟时间产生整体位移与旋转，用来表现太阳系相对银河中心方向的运动。
-- 相机：`src/components/CameraRig.tsx` 使用 drei `CameraControls`，支持聚焦目标、缩放、拖拽游览、WASD/方向键移动、Q/E 垂直移动、Shift 加速。
-- HUD：`src/components/Hud.tsx` 支持播放/暂停、重置时间、时间轴、速度选择、目标选择、聚焦、标签显示开关、轨道线显示开关和目标信息面板。
-- 天体数据：`src/data/solarSystem.ts` 是核心数据源，包含太阳、八大行星、主要卫星、矮行星、小天体族群，以及未来场景层占位的 `futureExternalLayers`。
-- 卫星表现：主要卫星以显式天体建模；木星、土星、天王星、海王星等还通过不规则卫星点云补足已知卫星数量。测试要求 `representedSatelliteCount` 与 `knownPlanetarySatelliteCounts` 一致。
-- 轨道计算：`src/lib/orbits.ts` 支持开普勒近似、偏心率、轨道倾角、升交点、近拱点幅角、相位和逆行。
-- 比例尺：`src/lib/scale.ts` 对内太阳系使用线性 AU 映射，对远日结构使用对数压缩；半径是视觉可读的非线性缩放，不是严格真实比例。
-- 时间系统：`src/lib/time.ts` 以 2026-06-02 UTC 为模拟纪元，`daysPerSecond` 控制模拟推进。
-- 视觉系统：`src/components/ProceduralMaterials.tsx` 使用 shader 程序化表现太阳、岩质行星、气态/冰巨星、冰质/岩质小天体等表面；太阳包含噪声流动、耀斑感、日冕与日珥。
-- 环与云：`RingSystem` 表现行星环，`OrbitLine` 表现轨道线，`SmallBodyCloud` 表现小行星带、木星特洛伊群、柯伊伯带、离散盘、彗星轨道流、奥尔特星云。
-- 样式：`src/styles.css` 是全局样式，当前 UI 是深色玻璃质感 HUD，画布全屏铺底。
-- 测试：当前有 4 个 Vitest 测试文件，覆盖太阳系目录、轨道、比例尺和时间函数。
+- Tech stack: Vite, React 19, TypeScript, Three.js, @react-three/fiber, @react-three/drei, @react-three/postprocessing, lucide-react, and Vitest.
+- Entry point: `src/main.tsx` mounts the React app, and `src/App.tsx` combines the 3D scene with the HUD.
+- Main scene: `src/components/SolarSystemScene.tsx` creates the R3F `Canvas`, lighting, Bloom/Vignette postprocessing, camera controls, starfield environment, small-body point clouds, and solar system root node.
+- Solar system root node: `SolarSystemRoot` applies simulation-time-based translation and rotation to represent the solar system's motion relative to the galactic center direction.
+- Camera: `src/components/CameraRig.tsx` uses drei `CameraControls` and supports target focusing, zooming, drag navigation, WASD/arrow-key movement, Q/E vertical movement, and Shift acceleration.
+- HUD: `src/components/Hud.tsx` supports play/pause, time reset, timeline control, speed selection, target selection, focus, label visibility, orbit-line visibility, and a target information panel.
+- Celestial data: `src/data/solarSystem.ts` is the core data source. It includes the Sun, eight planets, major moons, dwarf planets, small-body populations, and the `futureExternalLayers` placeholder for future scene layers.
+- Satellite representation: major moons are modeled as explicit celestial bodies. Jupiter, Saturn, Uranus, and Neptune also use irregular satellite point clouds to complete the known satellite counts. Tests require `representedSatelliteCount` to match `knownPlanetarySatelliteCounts`.
+- Orbit calculation: `src/lib/orbits.ts` supports Keplerian approximation, eccentricity, inclination, longitude of ascending node, argument of periapsis, phase, and retrograde motion.
+- Scale system: `src/lib/scale.ts` maps the inner solar system linearly in AU and uses logarithmic compression for distant structures. Radii use visually readable nonlinear scaling and are not strict real-world proportions.
+- Time system: `src/lib/time.ts` uses `2026-06-02 UTC` as the simulation epoch. `daysPerSecond` controls simulation advancement.
+- Visual system: `src/components/ProceduralMaterials.tsx` uses procedural shaders for the Sun, rocky planets, gas and ice giants, icy bodies, rocky small bodies, and related surfaces. The Sun includes noise-driven surface flow, flare-like effects, corona, and prominences.
+- Rings and clouds: `RingSystem` renders planetary rings, `OrbitLine` renders orbit lines, and `SmallBodyCloud` renders the asteroid belt, Jupiter Trojans, Kuiper belt, scattered disc, comet streams, and Oort cloud.
+- Styling: `src/styles.css` contains global styles. The current UI is a dark glass-like HUD over a full-screen canvas.
+- Tests: there are currently 4 Vitest test files covering the solar system catalog, orbital math, scale functions, and time functions.
 
-## 开发原则
+## Development Principles
 
-- 优先保持数据驱动：新增自然天体、卫星、小天体族群时，先扩展 `src/data/solarSystem.ts` 和 `src/types.ts`，再让现有组件消费数据。
-- 不要把自然天体、未来人造结构和 UI 状态混在同一层抽象里。未来扩展层应作为独立外部层或独立配置接入，并注册可选择/可聚焦目标。
-- 新增绕日天体时，应尽量提供 `semiMajorAxisAU`、`periodDays`、`eccentricity`、`inclinationDeg`、`longitudeOfAscendingNodeDeg`、`argumentOfPeriapsisDeg`、`phaseDeg`，保持与现有轨道模型一致。
-- 新增卫星时使用 `semiMajorAxisKm` 和父天体半径换算，不要手写场景距离。
-- 不要直接用真实半径或真实 AU 距离塞进 Three.js 坐标；必须经过 `scale.ts` 的映射函数，除非是刻意新增并测试过的比例系统。
-- 太阳本身需要继续保持自转表现。当前太阳数据已有 `rotation`，材质层也用动态 shader、日冕和日珥表现太阳活动。
-- 视觉优先使用程序化材质、点云、shader 和几何结构。若引入贴图或外部资产，需要确认加载路径、性能和构建结果。
-- R3F 动画逻辑应放在 `useFrame`；大量几何、点云、采样点应使用 `useMemo` 缓存，避免每帧重建。
-- 保持 HUD 是辅助控制层，不要让说明性大段文字遮挡 3D 视野。
-- 前端视觉改动后，应在浏览器里实际检查缩放、聚焦、标签、轨道线、移动控制和移动端布局。
+- Keep the implementation data-driven. When adding natural bodies, moons, or small-body populations, extend `src/data/solarSystem.ts` and `src/types.ts` first, then let existing components consume the data.
+- Do not mix natural celestial bodies, future artificial structures, and UI state in the same abstraction layer. Future extensions should be connected as independent external layers or independent configuration and should register selectable/focusable targets.
+- When adding heliocentric bodies, provide `semiMajorAxisAU`, `periodDays`, `eccentricity`, `inclinationDeg`, `longitudeOfAscendingNodeDeg`, `argumentOfPeriapsisDeg`, and `phaseDeg` whenever possible so the body stays aligned with the existing orbit model.
+- When adding moons, use `semiMajorAxisKm` and parent-body radius conversion. Do not hand-code scene distances.
+- Do not place real radii or real AU distances directly into Three.js coordinates. They must pass through the mapping functions in `scale.ts`, unless a deliberately new and tested scale system is being added.
+- The Sun itself must continue to show rotation. The current Sun data already includes `rotation`, and the material layer also uses dynamic shaders, corona, and prominences to express solar activity.
+- Prefer procedural materials, point clouds, shaders, and geometry for visuals. If textures or external assets are introduced, confirm loading paths, performance, and build output.
+- R3F animation logic should live in `useFrame`. Large geometry, point clouds, and sampled points should use `useMemo` to avoid rebuilding them every frame.
+- Keep the HUD as an auxiliary control layer. Do not let long explanatory text block the 3D view.
+- After frontend visual changes, inspect the app in a browser and verify zooming, focusing, labels, orbit lines, movement controls, and mobile layout.
 
-## 后续方向
+## Future Direction
 
-后续工作应继续围绕太阳系模拟本身展开：
+Future work should continue to center on the solar system simulation itself:
 
-- 提升天体表面、环系统、卫星群和小天体结构的视觉可信度。
-- 改进比例尺、导航体验、目标聚焦和远日结构的可读性。
-- 在不破坏自然天体模型的前提下，加入清晰分层的未来场景扩展。
+- Improve the visual credibility of body surfaces, ring systems, satellite groups, and small-body structures.
+- Improve scale readability, navigation experience, target focusing, and distant-structure legibility.
+- Add clearly layered future-scene extensions without breaking the natural celestial model.
 
-实现时应优先复用现有目标注册、选择、聚焦、时间推进和缩放体系。新增结构需要有清晰的空间层级、视觉尺度、交互目标和说明面板，不应破坏第一阶段自然天体模型。
+Implementation should prioritize reuse of the existing target registration, selection, focus, time advancement, and scale systems. New structures need clear spatial hierarchy, visual scale, interaction targets, and information panels, and must not break the phase-one natural celestial model.
 
-## 常用命令
+## Common Commands
 
-- 安装依赖：`npm install`
-- 本地开发：`npm run dev`
-- 测试：`npm test`
-- 生产构建：`npm run build`
-- 预览构建：`npm run preview`
+- Install dependencies: `npm install`
+- Local development: `npm run dev`
+- Tests: `npm test`
+- Production build: `npm run build`
+- Preview production build: `npm run preview`
 
-当前代码已验证：
+Current code verification:
 
-- `npm test` 通过：4 个测试文件，16 条测试。
-- `npm run build` 通过；Vite 会提示主 JS chunk 超过 500 kB，这是当前 3D 依赖体积导致的已知提示，不代表构建失败。
+- `npm test` passes: 4 test files, 16 tests.
+- `npm run build` passes. Vite may warn that the main JS chunk is larger than 500 kB; this is a known warning caused by the current 3D dependency size and does not indicate build failure.
