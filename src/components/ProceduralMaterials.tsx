@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, type RefObject } from "react";
 import { useTexture } from "@react-three/drei";
 import {
   AdditiveBlending,
@@ -8,10 +8,11 @@ import {
   Mesh,
   SRGBColorSpace,
   Vector3,
+  type Object3D,
   type ShaderMaterial,
   type Texture
 } from "three";
-import { useFrame } from "@react-three/fiber";
+import { useFrame, useThree } from "@react-three/fiber";
 import type {
   CelestialBodyConfig,
   SurfaceStyle,
@@ -35,6 +36,8 @@ const styleIds: Record<SurfaceStyle, number> = {
   dwarf: 12
 };
 
+type SceneObjectRef = RefObject<Object3D | null>;
+
 const vertexShader = `
   varying vec2 vUv;
   varying vec3 vNormal;
@@ -54,6 +57,7 @@ const planetFragmentShader = `
   uniform vec3 uBaseColor;
   uniform vec3 uSecondaryColor;
   uniform vec3 uAtmosphereColor;
+  uniform vec3 uLightDirection;
   uniform float uStyle;
   uniform float uTime;
 
@@ -97,7 +101,7 @@ const planetFragmentShader = `
 
   void main() {
     vec3 normal = normalize(vNormal);
-    float light = clamp(dot(normal, normalize(vec3(0.35, 0.42, 0.82))) * 0.62 + 0.46, 0.12, 1.2);
+    float light = clamp(dot(normal, normalize(uLightDirection)) * 0.62 + 0.46, 0.12, 1.2);
     float rim = pow(1.0 - max(dot(normal, vec3(0.0, 0.0, 1.0)), 0.0), 2.1);
     float n = fbm(normal * 4.0 + vec3(uTime * 0.03, 0.0, -uTime * 0.02));
     float fine = fbm(normal * 20.0 + vec3(0.0, uTime * 0.02, 0.0));
@@ -297,13 +301,20 @@ const atmosphereFragmentShader = `
   precision highp float;
 
   uniform vec3 uColor;
+  uniform vec3 uLightDirection;
   uniform float uOpacity;
   varying vec3 vNormal;
 
   void main() {
-    float rim = pow(1.0 - abs(dot(normalize(vNormal), vec3(0.0, 0.0, 1.0))), 2.0);
+    vec3 normal = normalize(vNormal);
+    float sunFacing = dot(normal, normalize(uLightDirection));
+    float rim = pow(1.0 - abs(dot(normal, vec3(0.0, 0.0, 1.0))), 2.0);
     float haze = smoothstep(0.04, 0.82, rim);
-    gl_FragColor = vec4(uColor * (0.62 + haze * 0.74), uOpacity * haze);
+    float dayGlow = smoothstep(-0.12, 0.72, sunFacing);
+    float terminatorGlow = smoothstep(0.44, 0.02, abs(sunFacing)) * haze;
+    float alpha = uOpacity * haze * (0.72 + dayGlow * 0.22 + terminatorGlow * 0.34);
+    vec3 color = uColor * (0.62 + haze * 0.74 + dayGlow * 0.24 + terminatorGlow * 0.38);
+    gl_FragColor = vec4(color, alpha);
   }
 `;
 
@@ -324,19 +335,64 @@ function configureDataTexture(texture?: Texture) {
   texture.anisotropy = Math.max(texture.anisotropy, 8);
 }
 
+function useSunLightDirectionUniform(
+  materialRef: RefObject<ShaderMaterial | null>,
+  targetObjectRef?: SceneObjectRef,
+  sunObjectRef?: SceneObjectRef
+) {
+  const { camera } = useThree();
+  const targetWorld = useMemo(() => new Vector3(), []);
+  const sunWorld = useMemo(() => new Vector3(), []);
+  const lightDirection = useMemo(() => new Vector3(0.35, 0.42, 0.82), []);
+
+  useFrame(() => {
+    const material = materialRef.current;
+    const targetObject = targetObjectRef?.current;
+    const sunObject = sunObjectRef?.current;
+    const uniform = material?.uniforms.uLightDirection;
+
+    if (!material || !uniform || !targetObject || !sunObject) {
+      return;
+    }
+
+    targetObject.getWorldPosition(targetWorld);
+    sunObject.getWorldPosition(sunWorld);
+    lightDirection.subVectors(sunWorld, targetWorld);
+
+    if (lightDirection.lengthSq() < 0.000001) {
+      lightDirection.set(0.35, 0.42, 0.82);
+    } else {
+      lightDirection.normalize();
+    }
+
+    lightDirection.transformDirection(camera.matrixWorldInverse);
+    uniform.value.copy(lightDirection);
+  });
+}
+
 export function RealisticBodyMaterial({
   body,
   textureSet,
   qualitySelection,
-  visualRadius
+  visualRadius,
+  targetObjectRef,
+  sunObjectRef
 }: {
   body: CelestialBodyConfig;
   textureSet?: SurfaceTextureSet;
   qualitySelection?: SurfaceQualitySelection;
   visualRadius: number;
+  targetObjectRef?: SceneObjectRef;
+  sunObjectRef?: SceneObjectRef;
 }) {
   if (!textureSet || !qualitySelection) {
-    return <ProceduralBodyMaterial body={body} />;
+    return (
+      <ProceduralBodyMaterial
+        body={body}
+        targetObjectRef={targetObjectRef}
+        sunObjectRef={sunObjectRef}
+      />
+    );
   }
 
   if (body.kind === "star") {
@@ -464,9 +520,13 @@ function TexturedSunMaterial({
 }
 
 export function ProceduralBodyMaterial({
-  body
+  body,
+  targetObjectRef,
+  sunObjectRef
 }: {
   body: CelestialBodyConfig;
+  targetObjectRef?: SceneObjectRef;
+  sunObjectRef?: SceneObjectRef;
 }) {
   const materialRef = useRef<ShaderMaterial>(null);
   const uniforms = useMemo(
@@ -476,11 +536,14 @@ export function ProceduralBodyMaterial({
       uAtmosphereColor: {
         value: new Color(body.surface.atmosphereColor ?? body.surface.secondaryColor)
       },
+      uLightDirection: { value: new Vector3(0.35, 0.42, 0.82) },
       uStyle: { value: styleIds[body.surface.style] },
       uTime: { value: 0 }
     }),
     [body]
   );
+
+  useSunLightDirectionUniform(materialRef, targetObjectRef, sunObjectRef);
 
   useFrame(({ clock }) => {
     if (materialRef.current) {
@@ -503,12 +566,14 @@ export function SurfaceOverlayLayers({
   body,
   textureSet,
   qualitySelection,
-  radius
+  radius,
+  sunObjectRef
 }: {
   body: CelestialBodyConfig;
   textureSet?: SurfaceTextureSet;
   qualitySelection?: SurfaceQualitySelection;
   radius: number;
+  sunObjectRef?: SceneObjectRef;
 }) {
   const variant = qualitySelection?.variant;
 
@@ -519,7 +584,11 @@ export function SurfaceOverlayLayers({
   return (
     <>
       {body.id === "earth" && variant.night ? (
-        <NightLightsShell texturePath={variant.night} radius={radius} />
+        <NightLightsShell
+          texturePath={variant.night}
+          radius={radius}
+          sunObjectRef={sunObjectRef}
+        />
       ) : null}
       {body.id === "earth" && variant.clouds ? (
         <CloudShell texturePath={variant.clouds} radius={radius} />
@@ -568,11 +637,14 @@ function CloudShell({
 
 function NightLightsShell({
   texturePath,
-  radius
+  radius,
+  sunObjectRef
 }: {
   texturePath: string;
   radius: number;
+  sunObjectRef?: SceneObjectRef;
 }) {
+  const meshRef = useRef<Mesh>(null);
   const materialRef = useRef<ShaderMaterial>(null);
   const texture = useTexture(texturePath) as Texture;
   const uniforms = useMemo(
@@ -588,8 +660,10 @@ function NightLightsShell({
     configureColorTexture(texture);
   }, [texture]);
 
+  useSunLightDirectionUniform(materialRef, meshRef, sunObjectRef);
+
   return (
-    <mesh scale={1.006}>
+    <mesh ref={meshRef} scale={1.006}>
       <sphereGeometry args={[radius, 96, 48]} />
       <shaderMaterial
         ref={materialRef}
@@ -609,24 +683,32 @@ function NightLightsShell({
 export function AtmosphereShell({
   color,
   radius,
-  opacity = 0.16
+  opacity = 0.16,
+  sunObjectRef
 }: {
   color: string;
   radius: number;
   opacity?: number;
+  sunObjectRef?: SceneObjectRef;
 }) {
+  const meshRef = useRef<Mesh>(null);
+  const materialRef = useRef<ShaderMaterial>(null);
   const uniforms = useMemo(
     () => ({
       uColor: { value: new Color(color) },
+      uLightDirection: { value: new Vector3(0.35, 0.42, 0.82) },
       uOpacity: { value: opacity }
     }),
     [color, opacity]
   );
 
+  useSunLightDirectionUniform(materialRef, meshRef, sunObjectRef);
+
   return (
-    <mesh scale={1.08}>
+    <mesh ref={meshRef} scale={1.08}>
       <sphereGeometry args={[radius, 48, 24]} />
       <shaderMaterial
+        ref={materialRef}
         uniforms={uniforms}
         vertexShader={vertexShader}
         fragmentShader={atmosphereFragmentShader}

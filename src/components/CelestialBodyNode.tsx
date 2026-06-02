@@ -1,7 +1,7 @@
 import { Html } from "@react-three/drei";
 import { useFrame, useThree } from "@react-three/fiber";
-import { memo, useEffect, useMemo, useRef } from "react";
-import { Group, Mesh, Vector3 } from "three";
+import { memo, useEffect, useMemo, useRef, type RefObject } from "react";
+import { Group, Mesh, Object3D, Vector3 } from "three";
 import type { CelestialBodyConfig, TargetRegistration } from "../types";
 import { bodiesById, childrenByParent } from "../data/solarSystem";
 import { getSurfaceTextureSet } from "../data/surfaceAssets";
@@ -86,7 +86,8 @@ export const CelestialBodyNode = memo(function CelestialBodyNode({
   labelsVisible,
   orbitsVisible,
   onSelect,
-  registerTarget
+  registerTarget,
+  sunObjectRef
 }: {
   body: CelestialBodyConfig;
   elapsedDays: number;
@@ -95,6 +96,7 @@ export const CelestialBodyNode = memo(function CelestialBodyNode({
   orbitsVisible: boolean;
   onSelect: (id: string) => void;
   registerTarget: RegisterTarget;
+  sunObjectRef: RefObject<Object3D | null>;
 }) {
   const groupRef = useRef<Group>(null);
   const spinRef = useRef<Group>(null);
@@ -148,6 +150,20 @@ export const CelestialBodyNode = memo(function CelestialBodyNode({
     return () => registerTarget(body.id, null);
   }, [body, registerTarget, visualRadius]);
 
+  useEffect(() => {
+    if (body.id !== "sun" || !groupRef.current) {
+      return;
+    }
+
+    sunObjectRef.current = groupRef.current;
+
+    return () => {
+      if (sunObjectRef.current === groupRef.current) {
+        sunObjectRef.current = null;
+      }
+    };
+  }, [body.id, sunObjectRef]);
+
   useFrame(() => {
     if (groupRef.current && body.orbit) {
       const position =
@@ -198,6 +214,8 @@ export const CelestialBodyNode = memo(function CelestialBodyNode({
                 textureSet={textureSet}
                 qualitySelection={qualitySelection}
                 visualRadius={visualRadius}
+                targetObjectRef={meshRef}
+                sunObjectRef={sunObjectRef}
               />
             </mesh>
             <SurfaceOverlayLayers
@@ -205,6 +223,7 @@ export const CelestialBodyNode = memo(function CelestialBodyNode({
               textureSet={textureSet}
               qualitySelection={qualitySelection}
               radius={visualRadius}
+              sunObjectRef={sunObjectRef}
             />
           </group>
         </group>
@@ -214,6 +233,7 @@ export const CelestialBodyNode = memo(function CelestialBodyNode({
             color={body.surface.atmosphereColor}
             radius={visualRadius}
             opacity={atmosphereOpacity(body)}
+            sunObjectRef={sunObjectRef}
           />
         ) : null}
         {body.kind === "star" ? (
@@ -252,6 +272,7 @@ export const CelestialBodyNode = memo(function CelestialBodyNode({
             orbitsVisible={orbitsVisible}
             onSelect={onSelect}
             registerTarget={registerTarget}
+            sunObjectRef={sunObjectRef}
           />
         ))}
       </group>

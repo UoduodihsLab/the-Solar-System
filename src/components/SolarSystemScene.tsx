@@ -40,6 +40,7 @@ export function SolarSystemScene({
   onSelect: (id: string) => void;
   targetRegistry: React.MutableRefObject<Map<string, TargetRegistration>>;
 }) {
+  const sunObjectRef = useRef<Object3D | null>(null);
   const registerTarget = useCallback(
     (id: string, registration: TargetRegistration | null) => {
       if (registration) {
@@ -77,8 +78,8 @@ export function SolarSystemScene({
         />
         <SpaceEnvironment elapsedDays={elapsedDays} />
         <ambientLight intensity={0.08} color="#9fb7d1" />
-        <pointLight position={[0, 0, 0]} intensity={1200} distance={5200} color="#ffd19a" />
         <SolarSystemRoot elapsedDays={elapsedDays}>
+          <pointLight position={[0, 0, 0]} intensity={1200} distance={5200} color="#ffd19a" />
           <CelestialBodyNode
             body={bodiesById.sun}
             elapsedDays={elapsedDays}
@@ -87,6 +88,7 @@ export function SolarSystemScene({
             orbitsVisible={orbitsVisible}
             onSelect={onSelect}
             registerTarget={registerTarget}
+            sunObjectRef={sunObjectRef}
           />
           {smallBodyPopulations.map((population) => (
             <SmallBodyCloud
