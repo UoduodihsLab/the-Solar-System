@@ -1110,9 +1110,9 @@ export const smallBodyPopulations: SmallBodyPopulationConfig[] = [
 ];
 
 export const futureExternalLayers = [
-  "trisolaris-fleet",
-  "droplet",
-  "earth-fleet",
+  "deep-space-fleet",
+  "interstellar-probe",
+  "orbital-fleet",
   "space-elevator"
 ] as const;
 

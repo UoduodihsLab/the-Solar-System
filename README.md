@@ -1,8 +1,8 @@
-# Three-Body Solar System
+# The Solar System
 
-A high-performance 3D solar system model built for the web with Vite, React, TypeScript, and Three.js. The current implementation represents Stage 1 of the project: the solar system before the arrival of the Trisolarans.
+A high-performance 3D solar system simulation built for the web with Vite, React, TypeScript, and Three.js.
 
-This is not a flat educational diagram. It is an explorable 3D space scene where planets and moons rotate and orbit, the solar system visually moves relative to the direction of the galactic center, and the user can zoom, focus, and travel through the model from a god's-eye perspective.
+The project presents the solar system as an explorable spatial model instead of a flat educational diagram. Planets and moons rotate and orbit, distant small-body structures remain navigable through visual scale compression, and the whole scene can be explored from a wide god's-eye perspective.
 
 ## Features
 
@@ -68,7 +68,7 @@ npm run preview
 - `src/components/ProceduralMaterials.tsx` contains the shader-based surface and solar visual effects.
 - `src/components/Hud.tsx` provides simulation controls and selected-target information.
 - `src/components/CameraRig.tsx` handles camera focusing and free navigation.
-- `src/data/solarSystem.ts` is the central catalog for bodies, moons, small-body populations, satellite counts, and future Stage 2 layer IDs.
+- `src/data/solarSystem.ts` is the central catalog for bodies, moons, small-body populations, satellite counts, and future scene layer IDs.
 - `src/lib/orbits.ts` implements orbital math.
 - `src/lib/scale.ts` maps real astronomical distances and radii into readable scene units.
 - `src/lib/time.ts` handles simulation time and formatting.
@@ -79,9 +79,9 @@ The scene uses a visual scale rather than a strict real-world scale. Inner solar
 
 The simulation epoch is fixed at `2026-06-02 UTC`. Time advances according to the selected `daysPerSecond` value in the HUD.
 
-## Current Stage
+## Current Scope
 
-Stage 1 focuses on the natural solar system:
+The current implementation focuses on the natural solar system:
 
 - Sun and eight planets
 - Planetary self-rotation and revolution
@@ -90,14 +90,7 @@ Stage 1 focuses on the natural solar system:
 - Dwarf planets and distant small-body structures
 - Visual indication of the solar system's motion relative to the galactic center direction
 
-Stage 2 is reserved for external and artificial structures from the Three-Body setting:
-
-- Trisolaran fleet
-- Droplet
-- Earth fleet
-- Space elevator
-
-These future layers should reuse the existing selection, focus, time, and scale systems without breaking the Stage 1 natural-body model.
+Future work should preserve the existing selection, focus, time, and scale systems while improving astronomical detail, rendering fidelity, and navigation performance.
 
 ## Verification
 

@@ -60,7 +60,7 @@ export function Hud({
     <div className="hud">
       <header className="hud-header">
         <div>
-          <p className="eyebrow">三体太阳系模型 / 第一阶段</p>
+          <p className="eyebrow">The Solar System / 第一阶段</p>
           <h1>太阳系上帝视角</h1>
         </div>
         <div className="date-pill">{formatSimulationDate(elapsedDays)}</div>
